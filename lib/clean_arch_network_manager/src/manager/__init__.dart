@@ -5,140 +5,119 @@ part of clean_arch_network_manager;
 class CleanArchNetworkManager {
   static final CleanArchNetworkManager instance =
       CleanArchNetworkManager._internal();
-  late Dio _dio;
-  BaseOptions? _options;
+
+  late final String _baseUrl;
+  late Map<String, String> _defaultHeaders;
+  void setHeaders({required Map<String,String> headers}){
+    _defaultHeaders = headers;
+  }
+  http.Client _client = http.Client();
   VoidCallback Function(CleanArchNetworkManagerError)? _onError;
+
   CleanArchNetworkManager._internal();
 
   Future<void> init({
-    BaseOptions? options,
+    required String baseUrl,
+    Map<String, String>? defaultHeaders,
+    http.Client? client,
     VoidCallback Function(CleanArchNetworkManagerError)? onError,
   }) async {
-    _options = options;
+    _baseUrl = baseUrl;
+    _defaultHeaders = defaultHeaders ?? {'Content-Type': 'application/json'};
+    _client = client ?? http.Client();
     _onError = onError;
   }
 
-  Future<Response?> send({
-    BaseOptions? options,
+  Future<http.Response?> send({
     required String path,
     required RequestType type,
     bool cache = false,
     Map<String, dynamic>? queryParameters,
     dynamic body,
-    bool skipSslCertificate = false,
+    Map<String, dynamic>? headers,
     VoidCallback Function(CleanArchNetworkManagerError)? onError,
   }) async {
-    if (options != null) {
-      _dio = Dio(options);
-    } else if (_options != null) {
-      _dio = Dio(_options);
-    } else {
-      _dio = Dio();
-    }
-
-    if (CleanArchConfig.get("DEBUG_NETWORK") == "true") {
-      _dio.interceptors.add(InterceptorsWrapper(
-        onRequest: (options, handler) {
-          CleanArchLog.instance.logSuccess(
-              '\x1B[34m🚀 REQUEST: \n Method: ${options.method.toUpperCase()} \n URI: ${options.uri}\x1B[0m\n'
-              '\x1B[36m📋 HEADERS: \n${_formatHeaders(options.headers)}\x1B[0m\n');
-        },
-        onResponse: (response, handler) {
-          CleanArchLog.instance.logSuccess(
-            '\x1B[33m📦 DATA: \n${_formatData(response.data)}\x1B[0m',
-          );
-        },
-        onError: (DioException error, handler) {
-          CleanArchLog.instance.logError(
-            '\x1B[31m❌ ERROR ${error.response?.statusCode} ${error.requestOptions.method.toUpperCase()} ${error.requestOptions.uri}\x1B[0m\n'
-            '\x1B[35m🔍 Message: ${error.message}\x1B[0m\n'
-            '\x1B[33m📦 Response Data: ${_formatData(error.response?.data)}\x1B[0m',
-          );
-        },
-      ));
-    }
     try {
- 
-      Response? response;
+      final uri = Uri.parse(_baseUrl + path).replace(
+        queryParameters:
+            queryParameters?.map((k, v) => MapEntry(k, v.toString())),
+      );
+
+      http.Response response;
+
       if (cache) {
-        var cachedData = await CleanArchStorage.instance.get(path);
-        if (cachedData != null) {
-          return Response(
-            data: jsonDecode(cachedData),
-            statusCode: 200,
-            requestOptions: RequestOptions(path: path),
-          );
+        final cached = await CleanArchStorage.instance.get(uri.toString());
+        if (cached != null) {
+          return http.Response(cached, 200);
         }
       }
 
       switch (type) {
         case RequestType.GET:
-          response = await _dio.get(path, queryParameters: queryParameters);
+          response = await _client.get(uri, headers: _defaultHeaders);
           break;
         case RequestType.POST:
- 
-          response = await _dio.post(path, data: body, options: Options());
+          response = await _client.post(
+            uri,
+            headers: _defaultHeaders,
+            body: jsonEncode(body),
+          );
           break;
         case RequestType.PUT:
-          response = await _dio.put(path, data: body);
+          response = await _client.put(
+            uri,
+            headers: _defaultHeaders,
+            body: jsonEncode(body),
+          );
           break;
         case RequestType.DELETE:
-          response = await _dio.delete(path);
+          response = await _client.delete(uri, headers: _defaultHeaders);
           break;
+      }
+
+      if (CleanArchConfig.get("DEBUG_NETWORK") == "true") {
+        _logRequest(type.name, uri.toString(), body);
+        _logResponse(response);
       }
 
       if (cache) {
-        await CleanArchStorage.instance.set(path, jsonEncode(response.data));
+        await CleanArchStorage.instance.set(uri.toString(), response.body);
       }
 
       return response;
-    } on DioException catch (e) {
+    } catch (e) {
+      final error = CleanArchNetworkManagerError(e: e);
       if (onError != null) {
-        onError.call(
-          _handleDioError(
-            e,
-          ),
-        );
-      } else if (_onError != null) {
-        _onError?.call(
-          _handleDioError(
-            e,
-          ),
-        );
+        onError.call(error);
+      } else {
+        _onError?.call(error);
       }
       return null;
     }
   }
 
-  String _formatHeaders(Map<String, dynamic>? headers) {
-    if (headers == null) return 'No headers';
-    return headers.entries.map((e) => '  ${e.key}: ${e.value}').join('\n');
-  }
-
-  String _formatData(dynamic data) {
-    if (data == null) return 'No data';
-    if (data is Map || data is List) {
-      return const JsonEncoder.withIndent('  ').convert(data);
+  void _logRequest(String method, String url, dynamic body) {
+    print('\x1B[34m🚀 REQUEST [$method]: $url\x1B[0m');
+    if (body != null) {
+      print(
+          '\x1B[36m📋 BODY: ${const JsonEncoder.withIndent('  ').convert(body)}\x1B[0m');
     }
-    return data.toString();
   }
 
-}
-
-CleanArchNetworkManagerError _handleDioError(
-  DioException e,
-) {
-  return CleanArchNetworkManagerError(
-    e: e,
-  );
+  void _logResponse(http.Response response) {
+    print('\x1B[33m📦 RESPONSE [${response.statusCode}]:\x1B[0m');
+    try {
+      print(
+          '\x1B[33m${const JsonEncoder.withIndent('  ').convert(jsonDecode(response.body))}\x1B[0m');
+    } catch (_) {
+      print(response.body);
+    }
+  }
 }
 
 enum RequestType { GET, POST, PUT, DELETE }
 
 class CleanArchNetworkManagerError {
-  final DioException e;
-
-  const CleanArchNetworkManagerError({
-    required this.e,
-  });
+  final dynamic e;
+  const CleanArchNetworkManagerError({required this.e});
 }

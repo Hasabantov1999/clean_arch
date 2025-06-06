@@ -101,7 +101,7 @@ class _CleanArchFormLabelState extends State<CleanArchFormLabel> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: _controller,
       onChanged: widget.onChanged,
       onEditingComplete: widget.onEditingComplete,

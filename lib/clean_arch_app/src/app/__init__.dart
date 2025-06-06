@@ -41,28 +41,30 @@ class CleanArchApp {
   });
 
   /// **Uygulamayı oluşturur ve bir Widget döndürür**
-  static Future<void> build(
-      {required String? config,
-      required FlutterOptionsConfiguration? sentryOptions,
-      required List<DeviceOrientation>? oriantationModes,
-      required CleanArchFireBaseOptions? firebase,
-      required bool sentryNavigatorObserver,
-      required bool performanceNavigatorObserver,
-      Future Function()? init,
-      Future Function()? mainFuture,
-      required Future Function(
-        String message,
-        StackTrace stackTrace,
-        String timeStamp,
-      )? serviceLog,
-      required bool? adaptiveCacheTheme,
-      required List<CleanArchTheme> themes,
-      required String? initialTheme,
-      required CleanArchRoute home,
-      required CleanArchLocale mainLocale,
-      String localizationAssetsFolder = "assets/i18n",
-      bool localizationCache = true,
-      String assetPath = "assets"}) async {
+  static Future<void> build({
+    required String? config,
+    required FlutterOptionsConfiguration? sentryOptions,
+    required List<DeviceOrientation>? oriantationModes,
+    required CleanArchFireBaseOptions? firebase,
+    required bool sentryNavigatorObserver,
+    required bool performanceNavigatorObserver,
+    Future Function()? init,
+    Future Function()? mainFuture,
+    required Future Function(
+      String message,
+      StackTrace stackTrace,
+      String timeStamp,
+    )? serviceLog,
+    required bool? adaptiveCacheTheme,
+    required List<CleanArchTheme> themes,
+    required String? initialTheme,
+    required CleanArchRoute home,
+    required CleanArchLocale mainLocale,
+    String localizationAssetsFolder = "assets/i18n",
+    bool localizationCache = true,
+    String assetPath = "assets",
+    Size designSize = const Size(360, 690),
+  }) async {
     runZonedGuarded(
       () async {
         if (config != null) {
@@ -104,6 +106,7 @@ class CleanArchApp {
               localizationAssetsFolder: localizationAssetsFolder,
               localizationCache: localizationCache,
               init: init,
+              designSize: designSize,
             ),
           );
         }
@@ -128,6 +131,7 @@ class CleanArchApp {
             localizationAssetsFolder: localizationAssetsFolder,
             localizationCache: true,
             init: init,
+            designSize: designSize,
           ),
         );
       },
@@ -154,22 +158,24 @@ class CleanArchApp {
 
 /// **Uygulama Çekirdek Yapısı (`StatefulWidget`)**
 class _App extends StatefulWidget {
-  const _App(
-      {this.config,
-      this.sentryOptions,
-      this.oriantationModes,
-      this.firebase,
-      this.sentryNavigatorObserver = false,
-      this.performanceNavigatorObserver = false,
-      this.serviceLog,
-      this.adaptiveCacheTheme,
-      required this.home,
-      this.initialTheme,
-      required this.themes,
-      required this.mainLocale,
-      required this.localizationAssetsFolder,
-      required this.localizationCache,
-      this.init});
+  const _App({
+    this.config,
+    this.sentryOptions,
+    this.oriantationModes,
+    this.firebase,
+    this.sentryNavigatorObserver = false,
+    this.performanceNavigatorObserver = false,
+    this.serviceLog,
+    this.adaptiveCacheTheme,
+    required this.home,
+    this.initialTheme,
+    required this.themes,
+    required this.mainLocale,
+    required this.localizationAssetsFolder,
+    required this.localizationCache,
+    this.init,
+    required this.designSize,
+  });
 
   final String? config;
   final FlutterOptionsConfiguration? sentryOptions;
@@ -190,6 +196,7 @@ class _App extends StatefulWidget {
   final String? initialTheme;
   final CleanArchRoute home;
   final CleanArchLocale mainLocale;
+  final Size designSize;
   @override
   State<_App> createState() => _AppState();
 }
@@ -226,6 +233,7 @@ class _AppState extends State<_App> {
       firebase: widget.firebase,
       init: widget.init,
       sentryOptions: widget.sentryOptions,
+      designSize: widget.designSize,
     );
   }
 }

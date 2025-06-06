@@ -17,7 +17,7 @@ class CleanArchAppWidget extends StatelessWidget {
     this.assetsFolder = "assets/i18n",
     this.localizationCache = true,
     this.init,
-
+    required this.designSize,
   });
   final bool sentryNavigatorObserver;
   final bool performanceNavigatorObserver;
@@ -32,7 +32,7 @@ class CleanArchAppWidget extends StatelessWidget {
   final CleanArchFireBaseOptions? firebase;
   final String assetsFolder;
   final bool localizationCache;
-
+  final Size designSize;
   @override
   Widget build(BuildContext context) {
     return CleanArchBuilder(
@@ -45,30 +45,37 @@ class CleanArchAppWidget extends StatelessWidget {
       },
       reactive: true,
       builder: (context, controller, child) {
-        return SnackyConfiguratorWidget(
-          app: CleanArchLocalization(
-            mainLocale: mainLocale,
-            assetsFolder: assetsFolder,
-            child: CleanArchThemeManager(
-              themes: themes,
-              builder: (context, theme) {
-                return MaterialApp(
-                  navigatorKey: CleanArchRouter().initialKey,
-                  debugShowCheckedModeBanner: false,
-                  navigatorObservers: [
-                    if (sentryNavigatorObserver) SentryNavigatorObserver(),
-                    if (performanceNavigatorObserver)
-                      PerformanceNavigatorObserver(),
-                    SnackyNavigationObserver(),
-                  ],
-                  theme: theme,
-                  home: CleanArchRouter().platformType(
-                    home,
-                  ),
-                );
-              },
-            ),
-          ),
+        return ScreenUtilInit(
+          designSize: const Size(360, 690),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, child) {
+            return SnackyConfiguratorWidget(
+              app: CleanArchLocalization(
+                mainLocale: mainLocale,
+                assetsFolder: assetsFolder,
+                child: CleanArchThemeManager(
+                  themes: themes,
+                  builder: (context, theme) {
+                    return MaterialApp(
+                      navigatorKey: CleanArchRouter().initialKey,
+                      debugShowCheckedModeBanner: false,
+                      navigatorObservers: [
+                        if (sentryNavigatorObserver) SentryNavigatorObserver(),
+                        if (performanceNavigatorObserver)
+                          PerformanceNavigatorObserver(),
+                        SnackyNavigationObserver(),
+                      ],
+                      theme: theme,
+                      home: CleanArchRouter().platformType(
+                        home,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
         );
       },
     );

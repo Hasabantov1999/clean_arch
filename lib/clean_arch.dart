@@ -19,6 +19,8 @@ export 'clean_arch_sentry/clean_arch_sentry.dart';
 export 'clean_arch_cache_manager/clean_arch_cache_manager.dart';
 export 'clean_arch_alerts/clean_arch_alerts.dart';
 export 'clean_arch_vibration/clean_arch_vibration.dart';
+export 'clean_arch_tabs_router/clean_arch_tabs_router.dart';
+export 'package:flutter_screenutil/flutter_screenutil.dart';
 class CleanArch {}
 
 CleanArch CA = CleanArch();

@@ -8,9 +8,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:clean_arch/clean_arch.dart';
+import 'package:http/http.dart' as http;
 
-
-
-export 'package:dio/dio.dart';
 
 part 'src/manager/__init__.dart';
